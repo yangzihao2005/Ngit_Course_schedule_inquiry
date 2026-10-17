@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "skills": {
+    "ai-sdk": {
+      "source": "C:/Users/Yzh_laptop/AppData/Local/Temp/opencode/vercel-ai",
+      "sourceType": "local",
+      "computedHash": "12672e7c040c99b182ceb86517f36f6409e7e22e101178cf554767b0f5d9dd0a"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "106acf230014cbb43ca34e6410371321b56ca742f9ee0442e8ec05bf02eb0384"
+    }
+  }
+}
