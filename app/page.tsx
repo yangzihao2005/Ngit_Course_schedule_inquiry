@@ -1,69 +1,169 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { RotateCcw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Toaster, toast } from "sonner";
+import { ExportBar } from "@/components/export-bar";
+import { ImageUploader } from "@/components/image-uploader";
+import { MergeFlow } from "@/components/merge-flow";
+import { ScheduleGrid } from "@/components/schedule-grid";
+import { TopBar, type LlmConfig } from "@/components/top-bar";
+import { Button } from "@/components/ui/button";
+import type { ScheduleFile } from "@/lib/storage";
+
+const COOKIE_KEY = "ass.cookie";
+const LLM_KEY = "ass.llm";
+
+const DEFAULT_LLM: LlmConfig = {
+  apiKey: "",
+  baseURL: "https://openrouter.ai/api/v1",
+  model: "xiaomi/mimo-v2.5",
+};
+
+const EMPTY_SCHEDULE: ScheduleFile = { jw: [], img: [], updatedAt: null };
+
+function loadLlm(): LlmConfig {
+  if (typeof window === "undefined") return DEFAULT_LLM;
+  try {
+    const raw = window.localStorage.getItem(LLM_KEY);
+    if (!raw) return DEFAULT_LLM;
+    return { ...DEFAULT_LLM, ...(JSON.parse(raw) as Partial<LlmConfig>) };
+  } catch {
+    return DEFAULT_LLM;
+  }
+}
+
+export default function HomePage() {
+  const [schedule, setSchedule] = useState<ScheduleFile>(EMPTY_SCHEDULE);
+  const [cookie, setCookie] = useState("");
+  const [llm, setLlm] = useState<LlmConfig>(DEFAULT_LLM);
+  const [year, setYear] = useState(2026);
+  const [term, setTerm] = useState<3 | 12>(3);
+  const [syncing, setSyncing] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  // 挂载：读浏览器配置 + 拉取本地课表（外部系统数据统一在异步任务里回填）
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrap() {
+      const savedCookie = window.localStorage.getItem(COOKIE_KEY) ?? "";
+      const savedLlm = loadLlm();
+      const res = await fetch("/api/schedule");
+      if (cancelled) return;
+      setCookie(savedCookie);
+      setLlm(savedLlm);
+      setReady(true);
+      if (res.ok) {
+        setSchedule((await res.json()) as ScheduleFile);
+      } else {
+        toast.error("读取本地课表失败");
+      }
+    }
+
+    void bootstrap().catch(() => {
+      if (!cancelled) toast.error("读取本地课表失败");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Cookie 与模型配置只存浏览器，不落盘
+  useEffect(() => {
+    if (!ready) return;
+    window.localStorage.setItem(COOKIE_KEY, cookie);
+  }, [cookie, ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    window.localStorage.setItem(LLM_KEY, JSON.stringify(llm));
+  }, [llm, ready]);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cookie, xnm: year, xqm: term }),
+      });
+      const data = (await res.json()) as {
+        schedule?: ScheduleFile;
+        count?: number;
+        error?: string;
+      };
+      if (!res.ok || !data.schedule) {
+        throw new Error(data.error || `同步失败（HTTP ${res.status}）`);
+      }
+      setSchedule(data.schedule);
+      toast.success(`教务课表已同步，${data.count ?? data.schedule.jw.length} 条`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "同步失败");
+    } finally {
+      setSyncing(false);
+    }
+  }, [cookie, year, term]);
+
+  const handleParsed = useCallback((next: ScheduleFile) => {
+    setSchedule(next);
+  }, []);
+
+  const handleReset = useCallback(async () => {
+    if (!window.confirm("确定清空教务课表和截图解析数据？此操作不可撤销。")) return;
+    try {
+      const res = await fetch("/api/schedule", { method: "DELETE" });
+      if (res.ok) {
+        setSchedule((await res.json()) as ScheduleFile);
+        toast.success("本地课表数据已清空");
+      } else {
+        toast.error("重置失败");
+      }
+    } catch {
+      toast.error("重置失败");
+    }
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="min-h-screen bg-paper">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-4 py-6 lg:px-8 lg:py-8">
+        <TopBar
+          cookie={cookie}
+          onCookieChange={setCookie}
+          year={year}
+          term={term}
+          onSemesterChange={(xnm, xqm) => {
+            setYear(xnm);
+            setTerm(xqm);
+          }}
+          syncing={syncing}
+          onSync={() => void handleSync()}
+          llm={llm}
+          onLlmChange={setLlm}
+          updatedAt={schedule.updatedAt}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+        <ScheduleGrid jw={schedule.jw} img={schedule.img} />
+
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <ImageUploader llm={llm} onParsed={handleParsed} />
+          <MergeFlow jw={schedule.jw} img={schedule.img} />
+        </div>
+
+        <ExportBar jw={schedule.jw} img={schedule.img} />
+
+        <footer className="flex flex-wrap items-center justify-between gap-3 pb-4">
+          <p className="label-quiet">
+            Cookie 与 API Key 只存这台浏览器，课表数据存 data/schedule.json。学期第 1
+            周从 2026-08-31 开始。
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          <Button variant="quiet" size="sm" onClick={() => void handleReset()}>
+            <RotateCcw className="size-3.5" />
+            重置本地数据
+          </Button>
+        </footer>
+      </div>
+      <Toaster theme="light" position="top-right" />
+    </main>
   );
 }

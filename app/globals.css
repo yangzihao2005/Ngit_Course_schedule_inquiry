@@ -1,26 +1,180 @@
 @import "tailwindcss";
 
+/* ============================================================
+   课表校对室 — 纸面校样设计系统
+   隐喻：教务课表是「校样」，实验课截图是「红笔修改」。
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f5f4ee;
+  --sheet: #fbfaf6;
+  --ink: #1b1d21;
+  --indigo: #2b4a6f;
+  --vermilion: #c73327;
+  --rule: #d7d4c8;
+  --muted: #6f6f66;
+  --focus: #2b4a6f;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* 核心色板 */
+  --color-paper: var(--paper);
+  --color-sheet: var(--sheet);
+  --color-ink: var(--ink);
+  --color-indigo: var(--indigo);
+  --color-vermilion: var(--vermilion);
+  --color-rule: var(--rule);
+  --color-muted: var(--muted);
+
+  /* 语义名（组件内可混用） */
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-card: var(--sheet);
+  --color-primary: var(--indigo);
+  --color-primary-foreground: var(--sheet);
+  --color-accent: var(--vermilion);
+  --color-accent-foreground: var(--sheet);
+  --color-secondary: color-mix(in oklab, var(--rule) 35%, var(--sheet));
+  --color-secondary-foreground: var(--ink);
+  --color-muted-foreground: var(--muted);
+  --color-border: var(--rule);
+  --color-ring: var(--focus);
+  --color-destructive: var(--vermilion);
+  --color-destructive-foreground: var(--sheet);
+
+  /* 字体：Newsreader 衬线（校历感）+ Archivo 无衬线（界面） */
+  --font-sans: var(--font-body), "Archivo", "PingFang SC", "Microsoft YaHei",
+    ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-family), "Newsreader", "Source Han Serif SC",
+    "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-mono: var(--font-body), "Archivo", ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================================
+   基础
+   ============================================================ */
+
+* {
+  border-color: var(--rule);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--indigo) 18%, transparent);
+}
+
+/* 表格数字对齐：时间、周次、教室号 */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ============================================================
+   结构件
+   ============================================================ */
+
+/* 稿纸：唯一的面板样式，直角、细线、无阴影 */
+.sheet {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+/* 安静的辅助文字（绝不全大写） */
+.label-quiet {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* 红笔批注：调整提示 */
+.red-note {
+  color: var(--vermilion);
+}
+
+/* 时刻表发丝线：灰底 + 缝隙 = 1px 格线 */
+.grid-paper {
+  background: var(--rule);
+  gap: 1px;
+}
+
+/* 图面（ReactFlow 画布）：稿纸 + 极淡网格 */
+.stage {
+  background-color: var(--sheet);
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--rule) 45%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--rule) 45%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ============================================================
+   动效：一次性「落定」，其余只响应操作
+   ============================================================ */
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.settle {
+  animation: settle 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.settle-2 {
+  animation-delay: 90ms;
+}
+
+.settle-3 {
+  animation-delay: 160ms;
+}
+
+.settle-4 {
+  animation-delay: 220ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settle,
+  .settle-2,
+  .settle-3,
+  .settle-4 {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   React Flow 融合
+   ============================================================ */
+
+.react-flow__edge-path {
+  stroke: var(--indigo);
+  stroke-width: 1.5;
+}
+
+.react-flow__edge-text {
+  font-family: var(--font-sans);
+  font-size: 11px;
+}
+
+.react-flow__attribution {
+  display: none;
 }

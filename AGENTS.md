@@ -34,15 +34,14 @@
 - Design System:@DESIGN.md
 
 ## 项目
-<!-- 每个项目使用本文件时，在此补充以下内容；未填写的条目，Agent 应先询问 -->
-- 技术栈：
-- 包管理器：
+- 技术栈：Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + AI SDK v7 + @xyflow/react
+- 包管理器：npm
 - 命令：
-  - 安装：
-  - 开发：
-  - Lint：
-  - 类型检查：
-  - 测试：
-  - 构建：
-- 数据库迁移方式：
-- 设计系统文件路径：
+  - 安装：`npm install`
+  - 开发：`npm run dev`
+  - Lint：`npm run lint`
+  - 类型检查：`npm run typecheck`
+  - 测试：`npm test`
+  - 构建：`npm run build`
+- 数据库迁移方式：无数据库（`data/schedule.json` 本地 JSON 存储，不走迁移）
+- 设计系统文件路径：`DESIGN.md`

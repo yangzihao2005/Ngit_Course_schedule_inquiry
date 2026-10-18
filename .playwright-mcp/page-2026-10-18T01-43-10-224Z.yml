@@ -1,0 +1,360 @@
+- generic [active] [ref=f2e1]:
+  - main [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - generic [ref=f2e5]:
+          - generic [ref=f2e6]:
+            - heading "课表校对室" [level=1] [ref=f2e7]
+            - paragraph [ref=f2e8]: 把实验课的真实教室，红笔改进教务课表。
+          - generic [ref=f2e9]:
+            - generic [ref=f2e10]: 更新于 2026/10/17 23:28:11
+            - button "模型设置" [ref=f2e11]
+            - button "同步教务课表" [disabled]
+        - generic [ref=f2e15]:
+          - generic [ref=f2e16]:
+            - text: 教务 Cookie
+            - generic [ref=f2e17]:
+              - textbox "教务 Cookie" [ref=f2e18]:
+                - /placeholder: 登录教务系统后，从 F12 网络请求里复制 Cookie 整行
+              - button "显示 Cookie" [ref=f2e19]
+          - generic [ref=f2e23]:
+            - text: 学年
+            - combobox [ref=f2e24]:
+              - generic: 2026-2027
+          - generic [ref=f2e28]:
+            - text: 学期
+            - combobox [ref=f2e29]:
+              - generic: 第一学期
+      - generic [ref=f2e33]:
+        - generic [ref=f2e34]:
+          - generic [ref=f2e35]:
+            - generic [ref=f2e36]:
+              - generic [ref=f2e37]:
+                - generic [ref=f2e38]: 第
+                - generic [ref=f2e39]: "7"
+                - generic [ref=f2e40]: 周
+              - generic [ref=f2e41]:
+                - generic [ref=f2e42]: 10月12日 – 10月18日
+                - generic [ref=f2e43]: 今天是第 7 周，周日
+            - generic [ref=f2e44]:
+              - button "全部周次" [ref=f2e45]
+              - button "回到本周" [ref=f2e46]
+          - group "学期周次刻度" [ref=f2e48]:
+            - button "第 1 周" [ref=f2e49]:
+              - generic [ref=f2e51]: "1"
+            - button "第 2 周" [ref=f2e52]:
+              - generic [ref=f2e54]: "2"
+            - button "第 3 周" [ref=f2e55]:
+              - generic [ref=f2e57]: "3"
+            - button "第 4 周" [ref=f2e58]:
+              - generic [ref=f2e60]: "4"
+            - button "第 5 周" [ref=f2e61]:
+              - generic [ref=f2e63]: "5"
+            - button "第 6 周" [ref=f2e64]:
+              - generic [ref=f2e66]: "6"
+            - button "第 7 周" [pressed] [ref=f2e67]:
+              - generic [ref=f2e69]: "7"
+            - button "第 8 周" [ref=f2e70]:
+              - generic [ref=f2e72]: "8"
+            - button "第 9 周" [ref=f2e73]:
+              - generic [ref=f2e75]: "9"
+            - button "第 10 周" [ref=f2e76]:
+              - generic [ref=f2e78]: "10"
+            - button "第 11 周" [ref=f2e79]:
+              - generic [ref=f2e81]: "11"
+            - button "第 12 周" [ref=f2e82]:
+              - generic [ref=f2e84]: "12"
+            - button "第 13 周" [ref=f2e85]:
+              - generic [ref=f2e87]: "13"
+            - button "第 14 周" [ref=f2e88]:
+              - generic [ref=f2e90]: "14"
+            - button "第 15 周" [ref=f2e91]:
+              - generic [ref=f2e93]: "15"
+            - button "第 16 周" [ref=f2e94]:
+              - generic [ref=f2e96]: "16"
+            - button "第 17 周" [ref=f2e97]:
+              - generic [ref=f2e99]: "17"
+            - button "第 18 周" [ref=f2e100]:
+              - generic [ref=f2e102]: "18"
+            - button "第 19 周" [ref=f2e103]:
+              - generic [ref=f2e105]: "19"
+            - button "第 20 周" [ref=f2e106]:
+              - generic [ref=f2e108]: "20"
+        - generic [ref=f2e109]:
+          - generic [ref=f2e110]:
+            - heading "周课表" [level=2] [ref=f2e111]
+            - generic [ref=f2e112]:
+              - generic [ref=f2e113]: 教务课表
+              - generic [ref=f2e115]: 截图修正
+              - generic [ref=f2e117]: 带删除线的周次被实验课替换
+          - generic [ref=f2e120]:
+            - generic [ref=f2e121]: 节次
+            - generic [ref=f2e122]:
+              - generic [ref=f2e123]: 周一
+              - generic [ref=f2e124]: 10/12
+            - generic [ref=f2e125]:
+              - generic [ref=f2e126]: 周二
+              - generic [ref=f2e127]: 10/13
+            - generic [ref=f2e128]:
+              - generic [ref=f2e129]: 周三
+              - generic [ref=f2e130]: 10/14
+            - generic [ref=f2e131]:
+              - generic [ref=f2e132]: 周四
+              - generic [ref=f2e133]: 10/15
+            - generic [ref=f2e134]:
+              - generic [ref=f2e135]: 周五
+              - generic [ref=f2e136]: 10/16
+            - generic [ref=f2e137]:
+              - generic [ref=f2e138]: 周六
+              - generic [ref=f2e139]: 10/17
+            - generic [ref=f2e140]:
+              - generic [ref=f2e141]: 周日
+              - generic [ref=f2e142]: 10/18
+            - generic [ref=f2e143]:
+              - generic [ref=f2e144]:
+                - generic [ref=f2e145]: 08:00
+                - generic [ref=f2e146]: 09:40 · 1-2 节
+              - generic "周一 08:00到09:40：计算机组成与结构" [ref=f2e250]:
+                - generic [ref=f2e251]:
+                  - paragraph [ref=f2e252]: 计算机组成与结构
+                  - paragraph [ref=f2e253]: 信息B201 王兴
+                  - generic [ref=f2e254]:
+                    - generic [ref=f2e255]: 1-4,7-8,13-159-12
+                    - generic [ref=f2e256]: 理论
+              - generic "周二 08:00到09:40：软件设计与体系结构、软件设计与体系结构" [ref=f2e257]:
+                - generic [ref=f2e258]:
+                  - paragraph [ref=f2e259]: 软件设计与体系结构
+                  - paragraph [ref=f2e260]: A406 郑翔天
+                  - generic [ref=f2e261]:
+                    - generic [ref=f2e262]: "7"
+                    - generic [ref=f2e263]: 实验
+                    - generic [ref=f2e264]: 截图修正
+                - generic [ref=f2e265]:
+                  - paragraph [ref=f2e266]: 软件设计与体系结构
+                  - paragraph [ref=f2e267]: 信息楼A406 郑翔天
+                  - generic [ref=f2e268]:
+                    - generic [ref=f2e269]: "7"
+                    - generic [ref=f2e270]: 实验
+                    - generic [ref=f2e271]: 截图修正
+                - paragraph [ref=f2e272]: 第 7 周有调整
+              - generic "周三 08:00到09:40：软件需求工程" [ref=f2e273]:
+                - generic [ref=f2e274]:
+                  - paragraph [ref=f2e275]: 软件需求工程
+                  - paragraph [ref=f2e276]: A406 徐金宝
+                  - generic [ref=f2e277]:
+                    - generic [ref=f2e278]: "7"
+                    - generic [ref=f2e279]: 实验
+                    - generic [ref=f2e280]: 截图修正
+                - paragraph [ref=f2e281]: 第 7 周有调整
+              - generic "周四 08:00到09:40：计算机组成与结构" [ref=f2e282]:
+                - generic [ref=f2e283]:
+                  - paragraph [ref=f2e284]: 计算机组成与结构
+                  - paragraph [ref=f2e285]: 南A304 王兴
+                  - generic [ref=f2e286]:
+                    - generic [ref=f2e287]: 1-4,6-15
+                    - generic [ref=f2e288]: 理论
+              - generic "周五 08:00到09:40：空" [ref=f2e151]
+              - generic "周六 08:00到09:40：空" [ref=f2e152]
+              - generic "周日 08:00到09:40：空" [ref=f2e153]
+            - generic [ref=f2e154]:
+              - generic [ref=f2e155]:
+                - generic [ref=f2e156]: 10:10
+                - generic [ref=f2e157]: 11:20 · 3-4 节
+              - generic "周一 10:10到11:20：WEB应用开发技术" [ref=f2e289]:
+                - generic [ref=f2e290]:
+                  - paragraph [ref=f2e291]: WEB应用开发技术
+                  - paragraph [ref=f2e292]: 文理B202 夏官梦
+                  - generic [ref=f2e293]:
+                    - generic [ref=f2e294]: 7-15
+                    - generic [ref=f2e295]: 理论
+              - generic "周二 10:10到11:20：空" [ref=f2e159]
+              - generic "周三 10:10到11:20：空" [ref=f2e160]
+              - generic "周四 10:10到11:20：WEB应用开发技术" [ref=f2e296]:
+                - generic [ref=f2e297]:
+                  - paragraph [ref=f2e298]: WEB应用开发技术
+                  - paragraph [ref=f2e299]: 文理B206 夏官梦
+                  - generic [ref=f2e300]:
+                    - generic [ref=f2e301]: 6-89-15
+                    - generic [ref=f2e302]: 理论
+              - generic "周五 10:10到11:20：数字图像处理技术B" [ref=f2e303]:
+                - generic [ref=f2e304]:
+                  - paragraph [ref=f2e305]: 数字图像处理技术B
+                  - paragraph [ref=f2e306]: 本部校区信息楼A406房间
+                  - generic [ref=f2e307]:
+                    - generic [ref=f2e308]: "7"
+                    - generic [ref=f2e309]: 实验
+                    - generic [ref=f2e310]: 截图修正
+                - paragraph [ref=f2e311]: 第 7 周有调整
+              - generic "周六 10:10到11:20：空" [ref=f2e163]
+              - generic "周日 10:10到11:20：空" [ref=f2e164]
+            - generic [ref=f2e165]:
+              - generic [ref=f2e166]:
+                - generic [ref=f2e167]: 13:40
+                - generic [ref=f2e168]: 15:20 · 5-6 节
+              - generic "周一 13:40到15:20：人机交互的软件工程方法" [ref=f2e312]:
+                - generic [ref=f2e313]:
+                  - paragraph [ref=f2e314]: 人机交互的软件工程方法
+                  - paragraph [ref=f2e315]: 东202 李春颖
+                  - generic [ref=f2e316]:
+                    - generic [ref=f2e317]: 1-4,7-9
+                    - generic [ref=f2e318]: 理论
+              - generic "周二 13:40到15:20：空" [ref=f2e170]
+              - generic "周三 13:40到15:20：空" [ref=f2e171]
+              - generic "周四 13:40到15:20：空" [ref=f2e172]
+              - generic "周五 13:40到15:20：空" [ref=f2e173]
+              - generic "周六 13:40到15:20：空" [ref=f2e174]
+              - generic "周日 13:40到15:20：空" [ref=f2e175]
+            - generic [ref=f2e176]:
+              - generic [ref=f2e177]:
+                - generic [ref=f2e178]: 15:40
+                - generic [ref=f2e179]: 17:00 · 7-8 节
+              - generic "周一 15:40到17:00：软件设计与体系结构、软件设计与体系结构" [ref=f2e319]:
+                - generic [ref=f2e320]:
+                  - paragraph [ref=f2e321]: 软件设计与体系结构
+                  - paragraph [ref=f2e322]: A406 郑翔天
+                  - generic [ref=f2e323]:
+                    - generic [ref=f2e324]: "7"
+                    - generic [ref=f2e325]: 实验
+                    - generic [ref=f2e326]: 截图修正
+                - generic [ref=f2e327]:
+                  - paragraph [ref=f2e328]: 软件设计与体系结构
+                  - paragraph [ref=f2e329]: 信息楼A406 郑翔天
+                  - generic [ref=f2e330]:
+                    - generic [ref=f2e331]: "7"
+                    - generic [ref=f2e332]: 实验
+                    - generic [ref=f2e333]: 截图修正
+                - paragraph [ref=f2e334]: 第 7 周有调整
+              - generic "周二 15:40到17:00：人机交互的软件工程方法" [ref=f2e335]:
+                - generic [ref=f2e336]:
+                  - paragraph [ref=f2e337]: 人机交互的软件工程方法
+                  - paragraph [ref=f2e338]: A406 李春颖
+                  - generic [ref=f2e339]:
+                    - generic [ref=f2e340]: "7"
+                    - generic [ref=f2e341]: 实验
+                    - generic [ref=f2e342]: 截图修正
+                - paragraph [ref=f2e343]: 第 7 周有调整
+              - generic "周三 15:40到17:00：空" [ref=f2e182]
+              - generic "周四 15:40到17:00：空" [ref=f2e183]
+              - generic "周五 15:40到17:00：空" [ref=f2e184]
+              - generic "周六 15:40到17:00：空" [ref=f2e185]
+              - generic "周日 15:40到17:00：空" [ref=f2e186]
+            - generic [ref=f2e187]:
+              - generic [ref=f2e188]:
+                - generic [ref=f2e189]: 18:30
+                - generic [ref=f2e190]: 20:10 · 9-10 节
+              - generic "周一 18:30到20:10：数字图像处理技术B" [ref=f2e344]:
+                - generic [ref=f2e345]:
+                  - paragraph [ref=f2e346]: 数字图像处理技术B
+                  - paragraph [ref=f2e347]: 经管C209 姚军财
+                  - generic [ref=f2e348]:
+                    - generic [ref=f2e349]: 1-4,7-14
+                    - generic [ref=f2e350]: 理论
+              - generic "周二 18:30到20:10：空" [ref=f2e192]
+              - generic "周三 18:30到20:10：空" [ref=f2e193]
+              - generic "周四 18:30到20:10：空" [ref=f2e194]
+              - generic "周五 18:30到20:10：空" [ref=f2e195]
+              - generic "周六 18:30到20:10：空" [ref=f2e196]
+              - generic "周日 18:30到20:10：空" [ref=f2e197]
+      - generic [ref=f2e201]:
+        - generic [ref=f2e202]:
+          - generic [ref=f2e203]:
+            - heading "实验课截图" [level=2] [ref=f2e204]
+            - paragraph [ref=f2e205]: 解析出的课会以红笔修正的方式并入课表
+          - generic [ref=f2e206]:
+            - button "上传实验课截图" [ref=f2e207] [cursor=pointer]:
+              - paragraph [ref=f2e211]: 拖到这里，或者点击选择
+              - paragraph [ref=f2e212]: PNG、JPG，单张不超过 8MB
+            - paragraph [ref=f2e213]: 老师发来的调课截图放这里，原图不会保存，只保留解析结果。
+        - generic [ref=f2e218]:
+          - generic [ref=f2e219]:
+            - heading "合并过程" [level=2] [ref=f2e220]
+            - paragraph [ref=f2e221]: 实验课优先于理论课，被替换的周次在校对结果里让位
+          - application [ref=f2e351]:
+            - generic [ref=f2e353]:
+              - generic:
+                - generic:
+                  - img:
+                    - group "Edge from jw to resolve":
+                      - generic [ref=f2e354]: 让出 33 个周次
+                  - img:
+                    - group "Edge from img to resolve":
+                      - generic [ref=f2e356]: 覆盖 33 个周次
+                  - img:
+                    - group "Edge from resolve to merged":
+                      - generic [ref=f2e358]: 得到 64 条
+                - generic:
+                  - group:
+                    - generic:
+                      - generic:
+                        - paragraph: 教务课表
+                      - generic:
+                        - generic:
+                          - term: 条目
+                          - definition: 23 条
+                        - generic:
+                          - term: 课程
+                          - definition: 6 门
+                        - generic:
+                          - term: 示例
+                          - definition: 计算机组成与结构、WEB应用开发技术
+                  - group:
+                    - generic:
+                      - generic:
+                        - paragraph: 截图解析
+                      - generic:
+                        - generic:
+                          - term: 条目
+                          - definition: 41 条
+                        - generic:
+                          - term: 课程
+                          - definition: 7 门
+                        - generic:
+                          - term: 示例
+                          - definition: WEB应用开发技术、WEB应用开发技术
+                  - group:
+                    - generic:
+                      - generic:
+                        - paragraph: 校对合并
+                      - generic:
+                        - generic:
+                          - term: 规则
+                          - definition: 实验课优先
+                        - generic:
+                          - term: 让位
+                          - definition: 9 条
+                        - generic:
+                          - term: 删去
+                          - definition: 0 条
+                  - group:
+                    - generic:
+                      - generic:
+                        - paragraph: 校对结果
+                      - generic:
+                        - generic:
+                          - term: 条目
+                          - definition: 64 条
+                        - generic:
+                          - term: 改动周次
+                          - definition: 33 个
+                        - generic:
+                          - term: 主要类型
+                          - definition: 实验
+      - generic [ref=f2e226]:
+        - generic [ref=f2e227]:
+          - generic [ref=f2e228]:
+            - text: 导出范围
+            - generic [ref=f2e229]:
+              - button "全部周次" [ref=f2e230]
+              - button "指定周次" [ref=f2e231]
+              - textbox "指定周次" [disabled] [ref=f2e232]:
+                - /placeholder: 1-16 或 1,3,5
+                - text: 1-16
+          - paragraph [ref=f2e233]: 将导出 64 节课，共 140 个日程（全部周次）
+        - generic [ref=f2e234]:
+          - button "导出 ICS" [ref=f2e235]
+          - button "导出 CSV" [ref=f2e239]
+      - generic [ref=f2e243]:
+        - paragraph [ref=f2e244]: Cookie 与 API Key 只存这台浏览器，课表数据存 data/schedule.json。学期第 1 周从 2026-08-31 开始。
+        - button "重置本地数据" [ref=f2e245]
+    - region "Notifications alt+T"
+  - alert [ref=f2e249]

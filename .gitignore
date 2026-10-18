@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# course schedule data (per-project runtime data, never commit)
+/data/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
