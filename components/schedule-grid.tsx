@@ -1,6 +1,8 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useMemo, useState, useSyncExternalStore } from "react";
+import { CourseEditorDialog, type EditorMode, type EditorSubmitPayload } from "@/components/course-editor-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DAY_CN,
@@ -10,9 +12,10 @@ import {
   type CourseKind,
 } from "@/lib/constants";
 import { dateOfWeekDay } from "@/lib/ics";
+import { addManual, editCourse, muteCourse, type ManualState } from "@/lib/manual";
 import { dayOfDate, formatWeeks, weekOf } from "@/lib/parse";
 import { priority, resolveWithReport } from "@/lib/resolve";
-import type { CourseItem } from "@/lib/types";
+import type { CourseItem, ManualMute } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const KIND_CN: Record<CourseKind, string> = {
@@ -37,13 +40,22 @@ function todayString(): string {
 /** 日期不订阅外部变化，空订阅即可 */
 const emptySubscribe = () => () => {};
 
+const DEFAULT_WEEKS = Array.from({ length: 16 }, (_, i) => i + 1);
+
 export interface ScheduleGridProps {
   jw: CourseItem[];
   img: CourseItem[];
+  manual: CourseItem[];
+  muted: ManualMute[];
+  /** 提交人工校对层（manual + muted），返回是否保存成功 */
+  onCommit: (next: ManualState) => Promise<boolean>;
 }
 
-export function ScheduleGrid({ jw, img }: ScheduleGridProps) {
-  const report = useMemo(() => resolveWithReport([...jw, ...img]), [jw, img]);
+export function ScheduleGrid({ jw, img, manual, muted, onCommit }: ScheduleGridProps) {
+  const report = useMemo(
+    () => resolveWithReport([...jw, ...img, ...manual], muted),
+    [jw, img, manual, muted],
+  );
   const merged = report.merged;
 
   const maxWeek = useMemo(
@@ -68,33 +80,90 @@ export function ScheduleGrid({ jw, img }: ScheduleGridProps) {
   const [selected, setSelected] = useState<number | "all" | null>(null);
   const week = selected ?? fallbackWeek;
 
-  /* 每格的红笔批注：谁在第几周让位给谁 */
+  const [editor, setEditor] = useState<{ mode: EditorMode } | null>(null);
+
+  const openCreate = (day: number, periods: number[]) => {
+    setEditor({
+      mode: {
+        kind: "create",
+        prefill: {
+          day,
+          periods,
+          weeks: week === "all" ? [...DEFAULT_WEEKS] : [week],
+        },
+      },
+    });
+  };
+
+  const openEdit = (item: CourseItem) => {
+    setEditor({ mode: { kind: "edit", item } });
+  };
+
+  const handleSubmit = async (
+    action: "save" | "remove",
+    payload: EditorSubmitPayload,
+  ): Promise<boolean> => {
+    if (!editor) return false;
+    const base: ManualState = { manual, muted };
+
+    let next: ManualState;
+    if (editor.mode.kind === "create") {
+      if (action === "remove") return false;
+      next = addManual(base, payload.draft);
+    } else if (action === "save") {
+      next = editCourse(base, editor.mode.item, payload.scope, payload.draft);
+    } else {
+      next = muteCourse(base, editor.mode.item, payload.scope, payload.draft.note);
+    }
+    return onCommit(next);
+  };
+
+  /* 每格的红笔批注：谁在第几周让位给谁 / 被手动停课 */
   const cellNotes = useMemo(() => {
     const map = new Map<string, { weeks: Set<number>; notes: string[] }>();
-    const losers = [
-      ...report.trimmed.map((t) => ({ item: t.item, lost: t.lostWeeks })),
-      ...report.removed.map((it) => ({ item: it, lost: it.weeks })),
-    ];
-    for (const { item, lost } of losers) {
+
+    const add = (item: CourseItem, lost: number[], text: string) => {
       PERIOD_GROUPS.forEach(([lo, hi], gi) => {
         if (!item.periods.some((p) => p >= lo && p <= hi)) return;
         const key = `${item.day}-${gi}`;
         const entry = map.get(key) ?? { weeks: new Set<number>(), notes: [] };
         for (const w of lost) entry.weeks.add(w);
-        const winner = merged.find(
-          (m) =>
-            m.name !== item.name &&
-            m.day === item.day &&
-            m.periods.some((p) => p >= lo && p <= hi) &&
-            priority(m) > priority(item) &&
-            lost.some((w) => m.weeks.includes(w)),
-        );
-        entry.notes.push(
-          `第 ${formatWeeks(lost)} 周：${item.name}${winner ? ` 让位给 ${winner.name}` : " 已调整"}`,
-        );
+        entry.notes.push(text);
         map.set(key, entry);
       });
+    };
+
+    // 让位给更高优先级的课
+    const losers = [
+      ...report.trimmed
+        .filter((t) => t.cause !== "mute")
+        .map((t) => ({ item: t.item, lost: t.lostWeeks })),
+      ...report.removed.map((it) => ({ item: it, lost: it.weeks })),
+    ];
+    for (const { item, lost } of losers) {
+      const winner = merged.find(
+        (m) =>
+          m.name !== item.name &&
+          m.day === item.day &&
+          priority(m) > priority(item) &&
+          lost.some((w) => m.weeks.includes(w)),
+      );
+      add(
+        item,
+        lost,
+        `第 ${formatWeeks(lost)} 周：${item.name}${winner ? ` 让位给 ${winner.name}` : " 已调整"}`,
+      );
     }
+
+    // 手动停课 / 剔除：部分裁剪与整条移除都记录在 mutes 里
+    for (const cut of report.mutes) {
+      add(
+        cut.item,
+        cut.lostWeeks,
+        `第 ${formatWeeks(cut.lostWeeks)} 周：${cut.item.name} 手动停课${cut.mute.reason ? `（${cut.mute.reason}）` : ""}`,
+      );
+    }
+
     return map;
   }, [report, merged]);
 
@@ -201,7 +270,7 @@ export function ScheduleGrid({ jw, img }: ScheduleGridProps) {
       <div className="sheet mt-4 overflow-hidden">
         <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-rule px-5 py-3">
           <h2 className="font-display text-[19px] font-semibold tracking-tight">周课表</h2>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="label-quiet flex items-center gap-1.5">
               <span className="inline-block h-3 w-1.5 bg-indigo" />
               教务课表
@@ -210,6 +279,14 @@ export function ScheduleGrid({ jw, img }: ScheduleGridProps) {
               <span className="inline-block h-3 w-1.5 bg-vermilion" />
               截图修正
             </span>
+            <span className="label-quiet flex items-center gap-1.5">
+              <span className="inline-block h-3 w-1.5 bg-ink" />
+              手动调课
+            </span>
+            <Button size="sm" variant="outline" onClick={() => openCreate(1, [1, 2])}>
+              <Plus className="size-3.5" />
+              手动加课
+            </Button>
           </div>
         </div>
 
@@ -276,7 +353,7 @@ export function ScheduleGrid({ jw, img }: ScheduleGridProps) {
                       return (
                         <div
                           key={key}
-                          className="min-h-[86px] bg-sheet px-2 py-2"
+                          className="flex min-h-[86px] flex-col bg-sheet px-2 py-2"
                           aria-label={
                             items.length
                               ? `${DAY_CN[day]} ${start}到${end}：${items
@@ -287,21 +364,28 @@ export function ScheduleGrid({ jw, img }: ScheduleGridProps) {
                               : `${DAY_CN[day]} ${start}到${end}：空`
                           }
                         >
-                          {items.map((it) => {
+                          {items.map((it, idx) => {
                             const lost = it.lostWeeks;
                             return (
-                              <div
-                                key={`${it.name}-${it.src}-${it.weeks.join("-")}`}
+                              <button
+                                key={it.id ?? `${it.name}-${it.src}-${it.periods.join("-")}-${idx}`}
+                                type="button"
+                                onClick={() => openEdit(it)}
                                 title={[
                                   `${it.name}，${week === "all" ? `第 ${formatWeeks(it.weeks)} 周` : `第 ${week} 周`}`,
                                   [it.place, it.teacher].filter(Boolean).join(" "),
+                                  it.note ? `批注：${it.note}` : "",
                                   lost?.length ? `第 ${formatWeeks(lost)} 周已让位` : "",
                                 ]
                                   .filter(Boolean)
                                   .join("，")}
                                 className={cn(
-                                  "mb-1.5 border-l-[3px] bg-sheet px-2 py-1.5 last:mb-0",
-                                  it.src === "img" ? "border-vermilion" : "border-indigo",
+                                  "mb-1.5 block w-full border-l-[3px] bg-sheet px-2 py-1.5 text-left transition-colors last:mb-0 hover:bg-ink/4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo/35",
+                                  it.src === "manual"
+                                    ? "border-ink"
+                                    : it.src === "img"
+                                      ? "border-vermilion"
+                                      : "border-indigo",
                                 )}
                               >
                                 <p className="text-[12.5px] font-semibold leading-snug">
@@ -319,19 +403,37 @@ export function ScheduleGrid({ jw, img }: ScheduleGridProps) {
                                       截图修正
                                     </span>
                                   ) : null}
+                                  {it.src === "manual" ? (
+                                    <span className="rounded-[2px] border border-ink/40 px-1 text-[10px] leading-4 text-ink">
+                                      手动调课
+                                    </span>
+                                  ) : null}
                                 </div>
-                              </div>
+                                {it.note ? (
+                                  <p className="red-note mt-1 text-[10px] leading-4">{it.note}</p>
+                                ) : null}
+                              </button>
                             );
                           })}
                           {showNote ? (
                             <p
-                              className="red-note px-0.5 text-[10px] leading-4"
+                              className="red-note mt-auto px-0.5 pt-1 text-[10px] leading-4"
                               title={note.notes.join("；")}
                             >
                               {week === "all"
                                 ? `第 ${formatWeeks(note.weeks)} 周有调整`
                                 : `第 ${week} 周有调整`}
                             </p>
+                          ) : null}
+                          {!items.length ? (
+                            <button
+                              type="button"
+                              onClick={() => openCreate(day, [lo, hi])}
+                              aria-label={`为${DAY_CN[day]}第 ${lo}-${hi} 节手动加课`}
+                              className="group flex flex-1 items-center justify-center rounded-[2px] text-muted/0 transition-colors hover:bg-ink/5 hover:text-muted focus-visible:bg-ink/5 focus-visible:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo/30"
+                            >
+                              <Plus className="size-4" />
+                            </button>
                           ) : null}
                         </div>
                       );
@@ -347,11 +449,20 @@ export function ScheduleGrid({ jw, img }: ScheduleGridProps) {
           <div className="border-t border-rule px-6 py-10 text-center">
             <p className="font-display text-[19px] font-semibold">课表还是空的</p>
             <p className="label-quiet mt-2">
-              同步教务课表，或者上传实验课截图，校对结果会出现在这张表上。
+              同步教务课表、上传实验课截图，或者点「手动加课」自己补一节。
             </p>
           </div>
         ) : null}
       </div>
+
+      {editor ? (
+        <CourseEditorDialog
+          mode={editor.mode}
+          currentWeek={week}
+          onClose={() => setEditor(null)}
+          onSubmit={handleSubmit}
+        />
+      ) : null}
     </section>
   );
 }

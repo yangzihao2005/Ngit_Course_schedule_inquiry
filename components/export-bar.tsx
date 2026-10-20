@@ -11,7 +11,7 @@ import { exportCsv } from "@/lib/csv";
 import { countIcsEvents, exportIcs } from "@/lib/ics";
 import { formatWeeks, parseWeeks } from "@/lib/parse";
 import { resolveSchedule } from "@/lib/resolve";
-import type { CourseItem } from "@/lib/types";
+import type { CourseItem, ManualMute } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 function download(filename: string, content: string, mime: string) {
@@ -29,10 +29,15 @@ function download(filename: string, content: string, mime: string) {
 export interface ExportBarProps {
   jw: CourseItem[];
   img: CourseItem[];
+  manual: CourseItem[];
+  muted: ManualMute[];
 }
 
-export function ExportBar({ jw, img }: ExportBarProps) {
-  const merged = useMemo(() => resolveSchedule([...jw, ...img]), [jw, img]);
+export function ExportBar({ jw, img, manual, muted }: ExportBarProps) {
+  const merged = useMemo(
+    () => resolveSchedule([...jw, ...img, ...manual], muted),
+    [jw, img, manual, muted],
+  );
   const [scope, setScope] = useState<"all" | "custom">("all");
   const [weeksText, setWeeksText] = useState("1-16");
   const [busy, setBusy] = useState<"ics" | "csv" | null>(null);

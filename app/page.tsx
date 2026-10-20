@@ -5,8 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { ExportBar } from "@/components/export-bar";
 import { ImageUploader } from "@/components/image-uploader";
+import { ManualLog } from "@/components/manual-log";
 import { MergeFlow } from "@/components/merge-flow";
 import { ScheduleGrid } from "@/components/schedule-grid";
+import { removeManual, restoreMute } from "@/lib/manual";
 import { TopBar, type LlmConfig } from "@/components/top-bar";
 import { Button } from "@/components/ui/button";
 import type { ScheduleFile } from "@/lib/storage";
@@ -20,7 +22,13 @@ const DEFAULT_LLM: LlmConfig = {
   model: "xiaomi/mimo-v2.5",
 };
 
-const EMPTY_SCHEDULE: ScheduleFile = { jw: [], img: [], updatedAt: null };
+const EMPTY_SCHEDULE: ScheduleFile = {
+  jw: [],
+  img: [],
+  manual: [],
+  muted: [],
+  updatedAt: null,
+};
 
 function loadLlm(): LlmConfig {
   if (typeof window === "undefined") return DEFAULT_LLM;
@@ -109,6 +117,56 @@ export default function HomePage() {
     setSchedule(next);
   }, []);
 
+  /** PATCH 人工校对层（manual + muted），成功返回 true */
+  const commitManual = useCallback(
+    async (next: Pick<ScheduleFile, "manual" | "muted">): Promise<boolean> => {
+      try {
+        const res = await fetch("/api/schedule", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(next),
+        });
+        const data = (await res.json()) as ScheduleFile & { error?: string };
+        if (!res.ok) {
+          throw new Error(data.error || `保存失败（HTTP ${res.status}）`);
+        }
+        setSchedule(data);
+        return true;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "保存手动修改失败");
+        return false;
+      }
+    },
+    [],
+  );
+
+  const currentManual = schedule.manual;
+  const currentMuted = schedule.muted;
+
+  const handleRemoveManual = useCallback(
+    (id: string) => commitManual(removeManual({ manual: currentManual, muted: currentMuted }, id)),
+    [commitManual, currentManual, currentMuted],
+  );
+
+  const handleRestoreMute = useCallback(
+    (id: string) => commitManual(restoreMute({ manual: currentManual, muted: currentMuted }, id)),
+    [commitManual, currentManual, currentMuted],
+  );
+
+  const handleClearManual = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/schedule?scope=manual", { method: "DELETE" });
+      const data = (await res.json()) as ScheduleFile & { error?: string };
+      if (!res.ok) throw new Error(data.error || "清空失败");
+      setSchedule(data);
+      toast.success("手动修改已清空，教务与截图数据保留");
+      return true;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "清空手动修改失败");
+      return false;
+    }
+  }, []);
+
   const handleReset = useCallback(async () => {
     if (!window.confirm("确定清空教务课表和截图解析数据？此操作不可撤销。")) return;
     try {
@@ -143,14 +201,38 @@ export default function HomePage() {
           updatedAt={schedule.updatedAt}
         />
 
-        <ScheduleGrid jw={schedule.jw} img={schedule.img} />
+        <ManualLog
+          manual={schedule.manual}
+          muted={schedule.muted}
+          onRemoveManual={handleRemoveManual}
+          onRestoreMute={handleRestoreMute}
+          onClear={handleClearManual}
+        />
+
+        <ScheduleGrid
+          jw={schedule.jw}
+          img={schedule.img}
+          manual={schedule.manual}
+          muted={schedule.muted}
+          onCommit={commitManual}
+        />
 
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <ImageUploader llm={llm} onParsed={handleParsed} />
-          <MergeFlow jw={schedule.jw} img={schedule.img} />
+          <MergeFlow
+            jw={schedule.jw}
+            img={schedule.img}
+            manual={schedule.manual}
+            muted={schedule.muted}
+          />
         </div>
 
-        <ExportBar jw={schedule.jw} img={schedule.img} />
+        <ExportBar
+          jw={schedule.jw}
+          img={schedule.img}
+          manual={schedule.manual}
+          muted={schedule.muted}
+        />
 
         <footer className="flex flex-wrap items-center justify-between gap-3 pb-4">
           <p className="label-quiet">

@@ -1,11 +1,12 @@
 /**
  * 课表数据规范化：把「同一门课每周一行」之类的碎片收拢成一条。
  *
- * 合并键：课程名 + 星期 + 节次 + 类型 + 教室（归一化）。
+ * 合并键：来源 + 课程名 + 星期 + 节次 + 类型 + 教室（归一化）。
+ * 只在同 src 内部归并——manual / jw / img 之间的覆盖关系必须留给 resolve 处理，
+ * 否则手动调课会在归一化阶段被提前混进教务课表、丢失让位报告。
  * 教室文本常有变体（"A406" / "信息楼A406" / "本部校区信息楼A406房间"），
  * 归一化取房间号；真正换了教室（A406 → B201）的课不会被合并。
  */
-import { SRC_RANK, type CourseSrc } from "./constants";
 import { uniqSorted } from "./parse";
 import type { CourseItem } from "./types";
 
@@ -33,6 +34,7 @@ export function normalizeItems(items: CourseItem[]): CourseItem[] {
   const groups = new Map<string, CourseItem[]>();
   for (const it of items) {
     const key = [
+      it.src,
       it.name,
       it.day,
       it.periods.join("-"),
@@ -51,17 +53,14 @@ export function normalizeItems(items: CourseItem[]): CourseItem[] {
       out.push(first);
       continue;
     }
-    const src = bucket.reduce<CourseSrc>(
-      (best, it) => ((SRC_RANK[it.src] ?? 0) > (SRC_RANK[best] ?? 0) ? it.src : best),
-      first.src,
-    );
     out.push({
       ...first,
       weeks: uniqSorted(bucket.flatMap((it) => it.weeks)),
       place: majority(bucket.map((it) => it.place)),
       teacher: majority(bucket.map((it) => it.teacher)),
       project: bucket.map((it) => it.project).find((p) => p) ?? undefined,
-      src,
+      id: bucket.map((it) => it.id).find((id) => id) ?? undefined,
+      note: bucket.map((it) => it.note).find((n) => n) ?? undefined,
     });
   }
   return out;

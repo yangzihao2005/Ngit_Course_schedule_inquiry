@@ -25,6 +25,7 @@ const KIND_CN: Record<CourseKind, string> = {
 const SRC_CN: Record<CourseSrc, string> = {
   jw: "教务",
   img: "图片",
+  manual: "手动",
 };
 
 function escapeCell(v: string): string {

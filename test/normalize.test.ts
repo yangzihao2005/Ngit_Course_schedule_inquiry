@@ -62,15 +62,34 @@ describe("normalizeItems", () => {
     expect(out).toHaveLength(2);
   });
 
-  it("教师名缺失时取非空，来源取更高优先级", () => {
+  it("跨来源不合并：jw 与 img 同型同教室也各自保留", () => {
     const out = normalizeItems([
       row({ name: "课", day: 3, periods: [3, 4], weeks: [1], place: "A406", teacher: "", kind: "lab", src: "jw" }),
       row({ name: "课", day: 3, periods: [3, 4], weeks: [2], place: "A406", teacher: "李老师", kind: "lab", src: "img" }),
+    ]);
+    expect(out).toHaveLength(2);
+    expect(out.map((it) => it.src).sort()).toEqual(["img", "jw"]);
+  });
+
+  it("同来源内仍归并，教师名缺失时取非空", () => {
+    const out = normalizeItems([
+      row({ name: "课", day: 3, periods: [3, 4], weeks: [1], place: "A406", teacher: "", kind: "lab", src: "img" }),
+      row({ name: "课", day: 3, periods: [3, 4], weeks: [2], place: "信息楼A406", teacher: "李老师", kind: "lab", src: "img" }),
     ]);
     expect(out).toHaveLength(1);
     expect(out[0].teacher).toBe("李老师");
     expect(out[0].src).toBe("img");
     expect(out[0].weeks).toEqual([1, 2]);
+  });
+
+  it("归并时保留首个 id 与非空 note", () => {
+    const out = normalizeItems([
+      row({ name: "课", day: 1, periods: [1, 2], weeks: [1], place: "A406", kind: "lab", src: "manual", id: "m_1" }),
+      row({ name: "课", day: 1, periods: [1, 2], weeks: [2], place: "A406", kind: "lab", src: "manual", note: "补课" }),
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0].id).toBe("m_1");
+    expect(out[0].note).toBe("补课");
   });
 
   it("无重复时原样返回", () => {

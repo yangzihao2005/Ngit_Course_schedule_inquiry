@@ -14,7 +14,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { normalizeItems } from "@/lib/normalize";
 import { resolveWithReport } from "@/lib/resolve";
-import type { CourseItem } from "@/lib/types";
+import type { CourseItem, ManualMute } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface Row {
@@ -25,7 +25,7 @@ interface Row {
 interface FlowNodeData extends Record<string, unknown> {
   title: string;
   rows: Row[];
-  tone: "jw" | "img" | "resolve" | "merged";
+  tone: "jw" | "img" | "manual" | "resolve" | "merged";
 }
 
 function PaperNode({ data }: NodeProps) {
@@ -36,6 +36,7 @@ function PaperNode({ data }: NodeProps) {
         "min-w-[196px] rounded-[2px] border bg-sheet",
         d.tone === "jw" && "border-indigo/70",
         d.tone === "img" && "border-vermilion/70",
+        d.tone === "manual" && "border-ink/70",
         d.tone === "resolve" && "border-ink/70",
         d.tone === "merged" && "border-ink",
       )}
@@ -45,6 +46,7 @@ function PaperNode({ data }: NodeProps) {
           "border-b px-3 py-2",
           d.tone === "jw" && "border-indigo/25 bg-indigo/6",
           d.tone === "img" && "border-vermilion/25 bg-vermilion/6",
+          d.tone === "manual" && "border-rule bg-ink/6",
           d.tone === "resolve" && "border-rule bg-paper",
           d.tone === "merged" && "border-rule bg-ink text-paper",
         )}
@@ -77,12 +79,19 @@ const nodeTypes = { paper: PaperNode };
 export interface MergeFlowProps {
   jw: CourseItem[];
   img: CourseItem[];
+  manual: CourseItem[];
+  muted: ManualMute[];
 }
 
-export function MergeFlow({ jw, img }: MergeFlowProps) {
-  const report = useMemo(() => resolveWithReport([...jw, ...img]), [jw, img]);
+export function MergeFlow({ jw, img, manual, muted }: MergeFlowProps) {
+  const report = useMemo(
+    () => resolveWithReport([...jw, ...img, ...manual], muted),
+    [jw, img, manual, muted],
+  );
   const jwItems = useMemo(() => normalizeItems(jw), [jw]);
   const imgItems = useMemo(() => normalizeItems(img), [img]);
+  const manualItems = useMemo(() => normalizeItems(manual), [manual]);
+  const manualCount = manualItems.length + muted.length;
   const lostWeeks = useMemo(
     () => report.trimmed.reduce((n, t) => n + t.lostWeeks.length, 0),
     [report],
@@ -115,7 +124,7 @@ export function MergeFlow({ jw, img }: MergeFlowProps) {
       {
         id: "img",
         type: "paper",
-        position: { x: 0, y: 176 },
+        position: { x: 0, y: 152 },
         data: {
           title: "截图解析",
           tone: "img",
@@ -127,14 +136,28 @@ export function MergeFlow({ jw, img }: MergeFlowProps) {
         } satisfies FlowNodeData,
       },
       {
+        id: "manual",
+        type: "paper",
+        position: { x: 0, y: 304 },
+        data: {
+          title: "手动调课",
+          tone: "manual",
+          rows: [
+            { label: "条目", value: `${manualItems.length} 条` },
+            { label: "停课", value: `${muted.length} 条` },
+            { label: "示例", value: sample(manualItems) },
+          ],
+        } satisfies FlowNodeData,
+      },
+      {
         id: "resolve",
         type: "paper",
-        position: { x: 286, y: 96 },
+        position: { x: 286, y: 152 },
         data: {
           title: "校对合并",
           tone: "resolve",
           rows: [
-            { label: "规则", value: "实验课优先" },
+            { label: "规则", value: "手动调课最高" },
             { label: "让位", value: `${report.trimmed.length} 条` },
             { label: "删去", value: `${report.removed.length} 条` },
           ],
@@ -143,7 +166,7 @@ export function MergeFlow({ jw, img }: MergeFlowProps) {
       {
         id: "merged",
         type: "paper",
-        position: { x: 572, y: 96 },
+        position: { x: 572, y: 152 },
         data: {
           title: "校对结果",
           tone: "merged",
@@ -155,7 +178,7 @@ export function MergeFlow({ jw, img }: MergeFlowProps) {
         } satisfies FlowNodeData,
       },
     ],
-    [jwItems, imgItems, report, lostWeeks, topKind],
+    [jwItems, imgItems, manualItems, muted.length, report, lostWeeks, topKind],
   );
 
   const edges: Edge[] = useMemo(
@@ -181,6 +204,16 @@ export function MergeFlow({ jw, img }: MergeFlowProps) {
         style: { stroke: "var(--vermilion)" },
       },
       {
+        id: "manual-resolve",
+        source: "manual",
+        target: "resolve",
+        label: manualCount ? `${manualCount} 处手动修改` : "暂无手动修改",
+        labelStyle: { fill: "var(--ink)", fontSize: 11 },
+        labelBgStyle: { fill: "var(--sheet)", fillOpacity: 0.9 },
+        labelBgPadding: [4, 2] as [number, number],
+        style: { stroke: "var(--ink)" },
+      },
+      {
         id: "resolve-merged",
         source: "resolve",
         target: "merged",
@@ -191,25 +224,27 @@ export function MergeFlow({ jw, img }: MergeFlowProps) {
         style: { stroke: "var(--ink)" },
       },
     ],
-    [lostWeeks, report.merged.length],
+    [lostWeeks, manualCount, report.merged.length],
   );
 
   return (
     <Card className="settle settle-3">
       <CardHeader>
         <CardTitle>合并过程</CardTitle>
-        <CardDescription>实验课优先于理论课，被替换的周次在校对结果里让位</CardDescription>
+        <CardDescription>
+          手动调课拥有最高裁决权；其余来源实验课优先于理论课，被替换的周次在结果里让位
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        {!jw.length && !img.length ? (
+        {!jw.length && !img.length && !manual.length && !muted.length ? (
           <div className="flex h-[280px] flex-col items-center justify-center gap-2 rounded-[3px] border border-dashed border-rule bg-paper px-6 text-center">
             <p className="font-display text-[17px] font-semibold">还没有数据可合并</p>
             <p className="label-quiet max-w-sm">
-              先同步教务课表，或者上传实验课截图，这里会展示两个来源如何校对成一张课表。
+              先同步教务课表、上传实验课截图，或者手动加一节课，这里会展示各来源如何校对成一张课表。
             </p>
           </div>
         ) : (
-          <div className="stage h-[340px] rounded-[3px] border border-rule">
+          <div className="stage h-[440px] rounded-[3px] border border-rule">
             <ReactFlow
               nodes={nodes}
               edges={edges}

@@ -57,7 +57,7 @@ export const PRACTICE_KEYS = [
 ] as const;
 
 export type CourseKind = "theory" | "practice" | "lab";
-export type CourseSrc = "jw" | "img";
+export type CourseSrc = "jw" | "img" | "manual";
 
 /** 覆盖优先级权重：lab > practice > theory */
 export const KIND_RANK: Record<CourseKind, number> = {
@@ -66,11 +66,15 @@ export const KIND_RANK: Record<CourseKind, number> = {
   lab: 2,
 };
 
-/** 同类型冲突时：图片导入 > 教务 */
+/** 同类型冲突时：图片导入 > 教务。manual 的裁决权在 resolve.priority 里单独处理。 */
 export const SRC_RANK: Record<CourseSrc, number> = {
   jw: 0,
   img: 1,
+  manual: 2,
 };
+
+/** 人工校对层：高于一切教务 / 截图课程，不论 kind。 */
+export const MANUAL_RANK = 100;
 
 /** 取一段节次的开始/结束时间（HH:MM），未知节号回落到默认作息 */
 export function sectionTimes(periods: readonly number[]): {

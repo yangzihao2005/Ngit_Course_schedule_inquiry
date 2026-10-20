@@ -7,6 +7,10 @@ import { inferKind } from "./parse";
 
 /** 一门课的一次开课：某星期几、某几节、哪些周。 */
 export interface CourseItem {
+  /** 手动条目的稳定标识，便于精准编辑与删除 */
+  id?: string;
+  /** 人工批注，如「国庆调休补课」「临时换至 B204」 */
+  note?: string;
   name: string;
   /** 1=周一 … 7=周日 */
   day: number;
@@ -20,6 +24,21 @@ export interface CourseItem {
   src: CourseSrc;
   /** 图片解析附带的实验项目名等元数据 */
   project?: string;
+}
+
+/**
+ * 人工停课 / 剔除规则：对 jw 或 img 课程按 name + day + periods 匹配，
+ * 从 weeks 中减去指定周次；传全部周次即整门删除。
+ */
+export interface ManualMute {
+  id: string;
+  name: string;
+  /** 1=周一 … 7=周日 */
+  day: number;
+  periods: number[];
+  weeks: number[];
+  /** 停课原因，如「第 8 周老师出差」 */
+  reason?: string;
 }
 
 export function makeCourseItem(

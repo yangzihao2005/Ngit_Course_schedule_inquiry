@@ -18,6 +18,15 @@ describe("priority", () => {
       priority({ kind: "theory", src: "jw" }),
     );
   });
+
+  it("manual 最高：即使理论课也高于 img 实验课", () => {
+    expect(priority({ kind: "theory", src: "manual" })).toBeGreaterThan(
+      priority({ kind: "lab", src: "img" }),
+    );
+    expect(priority({ kind: "theory", src: "manual" })).toBeGreaterThan(
+      priority({ kind: "lab", src: "jw" }),
+    );
+  });
 });
 
 describe("resolveSchedule", () => {
@@ -147,6 +156,171 @@ describe("resolveWithReport", () => {
     // 输家（理论课）让出 7 周，保留 8-9
     expect(loser.weeks).toEqual([8, 9]);
     expect(loser.lostWeeks).toEqual([7]);
+  });
+});
+
+const FULL_TERM = Array.from({ length: 16 }, (_, i) => i + 1);
+
+describe("manual 最高优先级", () => {
+  it("manual 理论课覆盖同格 jw 的指定周次", () => {
+    const jw = item({ name: "软件工程", day: 1, periods: [1, 2], weeks: FULL_TERM });
+    const manual = item({
+      name: "软件工程",
+      day: 1,
+      periods: [1, 2],
+      weeks: [8],
+      src: "manual",
+    });
+
+    const merged = resolveSchedule([jw, manual]);
+    expect(merged).toHaveLength(2);
+    expect(merged.find((x) => x.src === "jw")!.weeks).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16,
+    ]);
+    expect(merged.find((x) => x.src === "manual")!.weeks).toEqual([8]);
+  });
+
+  it("manual 理论课也覆盖 img 实验课", () => {
+    const imgLab = item({
+      name: "软件工程",
+      day: 2,
+      periods: [3, 4],
+      weeks: FULL_TERM,
+      kind: "lab",
+      src: "img",
+    });
+    const manual = item({
+      name: "临时补课",
+      day: 2,
+      periods: [3, 4],
+      weeks: [5, 6],
+      kind: "theory",
+      src: "manual",
+    });
+
+    const merged = resolveSchedule([imgLab, manual]);
+    expect(merged.find((x) => x.src === "img")!.weeks).not.toContain(5);
+    expect(merged.find((x) => x.src === "img")!.weeks).not.toContain(6);
+    expect(merged.find((x) => x.src === "manual")!.weeks).toEqual([5, 6]);
+  });
+
+  it("节次部分重叠也按周裁剪", () => {
+    const jw = item({ name: "理论课", day: 4, periods: [3, 4], weeks: [1, 2, 3] });
+    const manual = item({
+      name: "调课",
+      day: 4,
+      periods: [4, 5],
+      weeks: [2],
+      src: "manual",
+    });
+    const merged = resolveSchedule([jw, manual]);
+    expect(merged.find((x) => x.name === "理论课")!.weeks).toEqual([1, 3]);
+  });
+});
+
+describe("muted 停课剔除", () => {
+  it("单周停课：只剔除指定周并写入报告", () => {
+    const jw = item({ name: "软件工程", day: 1, periods: [1, 2], weeks: FULL_TERM });
+    const report = resolveWithReport(
+      [jw],
+      [{ id: "mu1", name: "软件工程", day: 1, periods: [1, 2], weeks: [8] }],
+    );
+
+    expect(report.merged).toHaveLength(1);
+    expect(report.merged[0].weeks).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16,
+    ]);
+    expect(report.mutes).toHaveLength(1);
+    expect(report.mutes[0].lostWeeks).toEqual([8]);
+    expect(report.mutes[0].emptied).toBe(false);
+    const trim = report.trimmed.find((t) => t.cause === "mute")!;
+    expect(trim.lostWeeks).toEqual([8]);
+  });
+
+  it("全周停课：整条移除且不重复计入 removed", () => {
+    const jw = item({ name: "软件工程", day: 1, periods: [1, 2], weeks: [1, 2, 3] });
+    const report = resolveWithReport(
+      [jw],
+      [{ id: "mu2", name: "软件工程", day: 1, periods: [1, 2], weeks: [1, 2, 3] }],
+    );
+
+    expect(report.merged).toHaveLength(0);
+    expect(report.removed).toHaveLength(0);
+    expect(report.mutes).toHaveLength(1);
+    expect(report.mutes[0].emptied).toBe(true);
+  });
+
+  it("按重叠节次匹配，而不是节次完全相等", () => {
+    const jw = item({ name: "软件工程", day: 1, periods: [3, 4], weeks: [1, 2] });
+    const hit = resolveSchedule(
+      [jw],
+      [{ id: "mu3", name: "软件工程", day: 1, periods: [4, 5], weeks: [1] }],
+    );
+    expect(hit[0].weeks).toEqual([2]);
+
+    const miss = resolveSchedule(
+      [jw],
+      [{ id: "mu4", name: "软件工程", day: 1, periods: [5, 6], weeks: [1] }],
+    );
+    expect(miss[0].weeks).toEqual([1, 2]);
+  });
+
+  it("不影响 manual 课程", () => {
+    const manual = item({
+      name: "软件工程",
+      day: 1,
+      periods: [1, 2],
+      weeks: [8],
+      src: "manual",
+    });
+    const merged = resolveSchedule(
+      [manual],
+      [{ id: "mu5", name: "软件工程", day: 1, periods: [1, 2], weeks: [8] }],
+    );
+    expect(merged).toHaveLength(1);
+    expect(merged[0].weeks).toEqual([8]);
+  });
+
+  it("名称或星期不匹配时不停课", () => {
+    const jw = item({ name: "软件工程", day: 1, periods: [1, 2], weeks: [1, 2] });
+    const wrongName = resolveSchedule(
+      [jw],
+      [{ id: "mu6", name: "软件工程实验", day: 1, periods: [1, 2], weeks: [1] }],
+    );
+    expect(wrongName[0].weeks).toEqual([1, 2]);
+
+    const wrongDay = resolveSchedule(
+      [jw],
+      [{ id: "mu7", name: "软件工程", day: 2, periods: [1, 2], weeks: [1] }],
+    );
+    expect(wrongDay[0].weeks).toEqual([1, 2]);
+  });
+});
+
+describe("单周调课与重新同步", () => {
+  const jw = item({ name: "软件工程", day: 1, periods: [1, 2], weeks: FULL_TERM });
+  const muted = [{ id: "mute_m1", name: "软件工程", day: 1, periods: [1, 2], weeks: [8] }];
+  const moved = item({
+    name: "软件工程",
+    day: 5,
+    periods: [1, 2],
+    weeks: [8],
+    src: "manual",
+  });
+
+  it("第 8 周从周一移到周五，原课让出第 8 周", () => {
+    const merged = resolveSchedule([jw, moved], muted);
+    const original = merged.find((x) => x.src === "jw")!;
+    expect(original.weeks).not.toContain(8);
+    expect(original.weeks).toContain(7);
+    expect(original.weeks).toContain(9);
+    expect(merged.find((x) => x.src === "manual")!.day).toBe(5);
+  });
+
+  it("重新同步教务（再次传入同一 jw）后手动修改仍生效", () => {
+    const first = resolveSchedule([jw, moved], muted);
+    const again = resolveSchedule([{ ...jw, weeks: [...FULL_TERM] }, moved], muted);
+    expect(again).toEqual(first);
   });
 });
 
